@@ -1,6 +1,7 @@
 import TextFieldCustom from "./components/RHF/TextFieldCustom";
 import AutoCompleteFieldCustom from "./components/RHF/AutoCompleteFieldCustom";
 import FormWrapper from "./components/RHF/FormWrapper";
+import SelectFieldCustom from "./components/RHF/SelectFieldCustom";
 import { useForm } from "react-hook-form";
 import Button from "@mui/material/Button";
 function App() {
@@ -8,7 +9,8 @@ function App() {
     defaultValues: {
       name: "",
       age: null,
-      fruits: ["orange"],
+      fruits: [],
+      // fruits: ["orange"],
     },
   });
   return (
@@ -39,8 +41,19 @@ function App() {
             ]}
             placeholder="Chọn"
           />
-          <AutoCompleteFieldCustom
+          {/* <AutoCompleteFieldCustom
             multiple={true as any}
+            nameField="fruits"
+            label="Chọn hoa quả"
+            options={[
+              { value: "orange", label: "Cam" },
+              { value: "apple", label: "Táo" },
+              { value: "Banana", label: "Chuối" },
+            ]}
+            placeholder="Chọn"
+          /> */}
+          <SelectFieldCustom
+            multiple={true}
             nameField="fruits"
             label="Chọn hoa quả"
             options={[
