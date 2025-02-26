@@ -21,8 +21,8 @@ const TextFieldCustom = ({ nameField, ...rest }: TextFieldCustom) => {
               {...rest}
               fullWidth
               variant="outlined"
+              helperText={error ? error.message : null}
               error={!!error}
-              helperText={error?.message}
             />
           );
         }}
