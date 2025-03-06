@@ -1,7 +1,9 @@
 import Autocomplete, { AutocompleteProps } from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
+import Checkbox from "@mui/material/Checkbox";
 import { useFormContext, Controller } from "react-hook-form";
+import { Ref } from "react";
 
 interface AutoCompleteFieldCustomProps<
   T extends { value: string; label: string }
@@ -10,12 +12,16 @@ interface AutoCompleteFieldCustomProps<
   nameField: string;
   options: T[];
   placeholder: string;
+  isChooseMultipleCheckbox?: boolean;
+  inputRef?: Ref<any>;
 }
 const AutoCompleteFieldCustom = ({
   nameField,
   label,
   options,
   placeholder,
+  isChooseMultipleCheckbox = false,
+  inputRef,
   ...rest
 }: AutoCompleteFieldCustomProps<T>) => {
   const { control } = useFormContext();
@@ -31,7 +37,7 @@ const AutoCompleteFieldCustom = ({
               {...rest} // Spread all inherited props
               options={options || []}
               value={
-                rest.multiple
+                rest?.multiple
                   ? options.filter((item) => value?.includes(item.value))
                   : options.find((item) => item.value === `${value}`)
               }
@@ -48,13 +54,21 @@ const AutoCompleteFieldCustom = ({
               }}
               renderOption={(
                 props,
-                option: { label: string; value: string }
+                option: { label: string; value: string },
+                { selected }
               ) => {
                 return (
                   <>
-                    <Box key={option.value} component="li" {...props}>
-                      {option.label}
-                    </Box>
+                    {isChooseMultipleCheckbox ? (
+                      <li key={option.label} {...props}>
+                        <Checkbox checked={selected} />
+                        {option.label}
+                      </li>
+                    ) : (
+                      <Box key={option.value} component="li" {...props}>
+                        {option.label}
+                      </Box>
+                    )}
                   </>
                 );
               }}
@@ -62,6 +76,7 @@ const AutoCompleteFieldCustom = ({
                 return (
                   <TextField
                     {...params}
+                    inputRef={inputRef}
                     label={label}
                     placeholder={placeholder}
                     error={!!error}
