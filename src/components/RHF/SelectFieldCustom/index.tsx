@@ -1,13 +1,19 @@
 import FormControl from "@mui/material/FormControl";
-import { InputLabel, MenuItem, Select } from "@mui/material";
-import { useFormContext, Controller } from "react-hook-form";
-import { SelectProps } from "@mui/material";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select, { SelectProps } from "@mui/material/Select";
 import FormHelperText from "@mui/material/FormHelperText";
 
+import { useFormContext, Controller } from "react-hook-form";
+
+type TOptionsValue = {
+  label: string;
+  value: string;
+};
 interface SelectFieldCustomProps extends SelectProps {
   label: string;
   nameField: string;
-  options: { value: string; label: string }[];
+  options: TOptionsValue[];
 }
 
 const SelectFieldCustom = ({
@@ -26,17 +32,29 @@ const SelectFieldCustom = ({
           render={({ field: { value, onChange }, fieldState: { error } }) => {
             return (
               <>
-                <InputLabel id="demo-simple-select-label">{label}</InputLabel>
+                <InputLabel
+                  error={!!error}
+                  shrink={true}
+                  disabled={rest.disabled}
+                >
+                  {label}
+                </InputLabel>
                 <Select
+                  MenuProps={{ disableScrollLock: true }}
                   {...rest}
+                  size="small"
                   labelId="demo-simple-select-label"
                   id="demo-simple-select"
                   value={value}
                   label="label"
                   onChange={onChange}
                 >
-                  {options.map((item) => {
-                    return <MenuItem value={item.value}>{item.label}</MenuItem>;
+                  {options.map((item: TOptionsValue) => {
+                    return (
+                      <MenuItem key={item?.value} value={item.value}>
+                        {item.label}
+                      </MenuItem>
+                    );
                   })}
                 </Select>
                 <FormHelperText error={!!error}>
