@@ -1,32 +1,50 @@
+
 import Autocomplete, {
   AutocompleteProps,
-  AutocompleteRenderInputParams,
-} from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-import Box from "@mui/material/Box";
-import Checkbox from "@mui/material/Checkbox";
-import CircularProgress from "@mui/material/CircularProgress";
-import { useFormContext, Controller } from "react-hook-form";
-import React, { Ref, ChangeEvent, HTMLAttributes, SyntheticEvent } from "react";
-import { AutocompleteRenderOptionState } from "@mui/material/Autocomplete/Autocomplete";
+  AutocompleteRenderGetTagProps,
+  AutocompleteRenderInputParams
+} from '@mui/material/Autocomplete'
+import TextField, { TextFieldProps } from '@mui/material/TextField'
+import Box from '@mui/material/Box'
+import Checkbox from '@mui/material/Checkbox'
+import CircularProgress from '@mui/material/CircularProgress'
+
+import { useFormContext, Controller } from 'react-hook-form'
+import React, { Ref, ChangeEvent, HTMLAttributes, SyntheticEvent } from 'react'
+import { AutocompleteRenderOptionState } from '@mui/material/Autocomplete/Autocomplete'
+import Chip from '@mui/material/Chip'
+import CancelIcon from '@mui/icons-material/Cancel'
+
+interface TOptionsValue {
+  value:string
+  label:string
+}
 
 interface AutoCompleteFieldCustomProps<
-  T extends { value: string; label: string }
-> extends Omit<AutocompleteProps<T, false, false, false>, "renderInput"> {
-  label: string;
-  nameField: string;
-  options: T[];
-  placeholder: string;
-  isChooseMultipleCheckbox?: boolean;
-  inputRef?: Ref<any>;
-  onTextFieldChange?: (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  onAutoCompleteChange?: (e: SyntheticEvent, value: any) => void;
-  slotProps?: AutocompleteProps<any, any, any, any>["slotProps"];
-  isLoadingData?: boolean;
+  T extends TOptionsValue,
+  Multiple extends boolean = false,
+  DisableClearable extends boolean = false,
+  FreeSolo extends boolean = false
+> extends Omit<AutocompleteProps<T, Multiple, DisableClearable, FreeSolo>, 'renderInput'> {
+  label?: string
+  nameField: string
+  options: T[]
+  placeholder: string
+  isChooseMultipleCheckbox?: boolean
+  inputRef?: Ref<any>
+  onTextFieldChange?: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
+  onAutoCompleteChange?: (e: SyntheticEvent, value: any[] | undefined) => void
+  slotProps?: AutocompleteProps<T, Multiple, DisableClearable, FreeSolo>['slotProps']
+  isLoadingData?: boolean
+  textFieldProps?: TextFieldProps
 }
-const AutoCompleteFieldCustom = ({
+
+const AutoCompleteFieldCustom = <
+  T extends TOptionsValue,
+  Multiple extends boolean = false,
+  DisableClearable extends boolean = false,
+  FreeSolo extends boolean = false
+>({
   nameField,
   label,
   options,
@@ -37,9 +55,10 @@ const AutoCompleteFieldCustom = ({
   slotProps,
   isLoadingData = false,
   onAutoCompleteChange,
+  textFieldProps,
   ...rest //   @ts-ignore
-}: AutoCompleteFieldCustomProps<T>) => {
-  const { control } = useFormContext();
+}: AutoCompleteFieldCustomProps<T, Multiple, DisableClearable, FreeSolo>) => {
+  const { control } = useFormContext()
 
   return (
     <>
@@ -49,43 +68,60 @@ const AutoCompleteFieldCustom = ({
         render={({ field: { value, onChange }, fieldState: { error } }) => {
           return (
             <Autocomplete
+              fullWidth={true}
+              renderTags={(value: any[], getTagProps: AutocompleteRenderGetTagProps) => {
+                return value.map((option: TOptionsValue, indexTag: number) => {
+                  const { key, ...tagProps } = getTagProps({ index: indexTag })
+                  return (
+                    <Chip
+                      key={key}
+                      label={option.label}
+                      size='small'
+                      deleteIcon={
+                        <CancelIcon
+                          sx={{
+                            color: 'rgba(0, 0, 0, 0.58)'
+                          }}
+                        />
+                      }
+                      {...tagProps}
+                    />
+                  )
+                })
+              }}
               loading={isLoadingData}
-              {...rest} // Spread all inherited props
               options={options || []}
               value={
                 rest?.multiple
-                  ? options.filter((item) => value?.includes(item.value))
-                  : options.find((item) => item.value === `${value}`)
+                  ? options.filter(item => value?.includes(item.value))
+                  : options.find(item => item.value === `${value}`) || value
               }
               onChange={(e: SyntheticEvent, newValue) => {
                 if (Array.isArray(newValue)) {
-                  onChange(newValue?.map((item) => item?.value));
+                  onChange(newValue?.map(item => item?.value))
                 } else {
-                  onChange(newValue?.value);
+                  onChange(newValue?.value)
                 }
 
                 if (onAutoCompleteChange) {
                   if (rest?.multiple && Array.isArray(newValue)) {
-                    onAutoCompleteChange(
-                      e,
-                      newValue?.map((item) => item?.value)
-                    );
+                    onAutoCompleteChange(e, newValue?.map(item => item?.value))
                   } else {
-                    onAutoCompleteChange(e, newValue?.value);
+                    onAutoCompleteChange(e, newValue?.value)
                   }
                 }
               }}
-              noOptionsText="Không có lựa chọn"
+              noOptionsText='Không có lựa chọn'
               isOptionEqualToValue={(option, value) => {
-                return option.value === value?.value;
+                return option.value === value?.value
               }}
               slotProps={{
                 popper: {
                   sx: {
-                    zIndex: 10,
-                  },
+                    zIndex: 10
+                  }
                 },
-                ...slotProps,
+                ...slotProps
               }}
               renderOption={(
                 props: HTMLAttributes<HTMLLIElement>,
@@ -95,33 +131,38 @@ const AutoCompleteFieldCustom = ({
                 return (
                   <>
                     {isChooseMultipleCheckbox ? (
-                      <Box key={option.value} component="li" {...props}>
-                        <Checkbox
-                          checked={selected}
-                          style={{ marginRight: 8, padding: 0 }}
-                        />
+                      <Box key={option.value} component='li' {...props}>
+                        <Checkbox checked={selected} style={{ marginRight: 8, padding: 0 }} />
                         {option.label}
                       </Box>
                     ) : (
-                      <Box key={option.value} component="li" {...props}>
+                      <Box key={option.value} component='li' {...props}>
                         {option.label}
                       </Box>
                     )}
                   </>
-                );
+                )
               }}
+              openOnFocus={true}
+              {...rest} // Spread all inherited props
               renderInput={(params: AutocompleteRenderInputParams) => {
                 return (
                   <TextField
                     {...params}
-                    onChange={(
-                      e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-                    ) => {
+                    {...textFieldProps}
+                    onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                       if (onTextFieldChange) {
-                        onTextFieldChange(e);
+                        onTextFieldChange(e)
                       }
                     }}
-                    sx={{ "& input::placeholder": { fontSize: "13px" } }}
+                    sx={{
+                      '& .MuiInputBase-root.Mui-disabled': {
+                        color: '#888' // Change text color
+                      },
+                      '& .MuiInputBase-root': {
+                        paddingRight: '30px !important'
+                      }
+                    }}
                     InputLabelProps={{ shrink: true }}
                     inputRef={inputRef}
                     label={label}
@@ -130,24 +171,26 @@ const AutoCompleteFieldCustom = ({
                     helperText={error ? error.message : null}
                     InputProps={{
                       ...params.InputProps,
+                      ...textFieldProps?.InputProps,
                       endAdornment: (
                         <React.Fragment>
                           {isLoadingData ? (
-                            <CircularProgress color="inherit" size={20} />
-                          ) : null}
-                          {params.InputProps.endAdornment}
+                            <CircularProgress color='primary' size={20} />
+                          ) : (
+                            params.InputProps.endAdornment
+                          )}
                         </React.Fragment>
-                      ),
+                      )
                     }}
                   />
-                );
+                )
               }}
             />
-          );
+          )
         }}
       />
     </>
-  );
-};
+  )
+}
 
-export default AutoCompleteFieldCustom;
+export default AutoCompleteFieldCustom
