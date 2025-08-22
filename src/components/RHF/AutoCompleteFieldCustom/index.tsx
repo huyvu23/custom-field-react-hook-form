@@ -1,46 +1,54 @@
+import { useFormContext, Controller } from "react-hook-form";
+import React, {
+  Ref,
+  ChangeEvent,
+  HTMLAttributes,
+  SyntheticEvent,
+  Fragment,
+} from "react";
 
+// MUI IMPORT
 import Autocomplete, {
   AutocompleteProps,
   AutocompleteRenderGetTagProps,
-  AutocompleteRenderInputParams
-} from '@mui/material/Autocomplete'
-import TextField, { TextFieldProps } from '@mui/material/TextField'
-import Box from '@mui/material/Box'
-import Checkbox from '@mui/material/Checkbox'
-import CircularProgress from '@mui/material/CircularProgress'
+  AutocompleteRenderInputParams,
+} from "@mui/material/Autocomplete";
+import { AutocompleteValue } from "@mui/material";
+import TextField, { TextFieldProps } from "@mui/material/TextField";
+import Box from "@mui/material/Box";
+import Checkbox from "@mui/material/Checkbox";
+import CircularProgress from "@mui/material/CircularProgress";
+import Chip from "@mui/material/Chip";
+import { AutocompleteRenderOptionState } from "@mui/material/Autocomplete/Autocomplete";
 
-import { useFormContext, Controller } from 'react-hook-form'
-import React, { Ref, ChangeEvent, HTMLAttributes, SyntheticEvent } from 'react'
-import { AutocompleteRenderOptionState } from '@mui/material/Autocomplete/Autocomplete'
-import Chip from '@mui/material/Chip'
-import CancelIcon from '@mui/icons-material/Cancel'
+// ICON
+import CancelIcon from "@mui/icons-material/Cancel";
 
-interface TOptionsValue {
-  value:string
-  label:string
-}
-
-interface AutoCompleteFieldCustomProps<
-  T extends TOptionsValue,
+interface AutocompleteFieldCustomProps<
+  T extends { value: string; label: string },
   Multiple extends boolean = false,
   DisableClearable extends boolean = false,
   FreeSolo extends boolean = false
-> extends Omit<AutocompleteProps<T, Multiple, DisableClearable, FreeSolo>, 'renderInput'> {
-  label?: string
-  nameField: string
-  options: T[]
-  placeholder: string
-  isChooseMultipleCheckbox?: boolean
-  inputRef?: Ref<any>
-  onTextFieldChange?: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  onAutoCompleteChange?: (e: SyntheticEvent, value: any[] | undefined) => void
-  slotProps?: AutocompleteProps<T, Multiple, DisableClearable, FreeSolo>['slotProps']
-  isLoadingData?: boolean
-  textFieldProps?: TextFieldProps
+> extends Omit<
+    AutocompleteProps<T, Multiple, DisableClearable, FreeSolo>,
+    "renderInput"
+  > {
+  label?: string;
+  nameField: string;
+  options: T[];
+  placeholder: string;
+  isChooseMultipleCheckbox?: boolean;
+  inputRef?: Ref<any>;
+  onTextFieldChange?: (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => void;
+  onAutocompleteChange?: (e: SyntheticEvent, value: T) => void;
+  isLoadingData?: boolean;
+  textFieldProps?: TextFieldProps;
 }
 
-const AutoCompleteFieldCustom = <
-  T extends TOptionsValue,
+const AutocompleteFieldCustom = <
+  T extends { value: string; label: string },
   Multiple extends boolean = false,
   DisableClearable extends boolean = false,
   FreeSolo extends boolean = false
@@ -52,13 +60,12 @@ const AutoCompleteFieldCustom = <
   isChooseMultipleCheckbox = false,
   inputRef,
   onTextFieldChange,
-  slotProps,
   isLoadingData = false,
-  onAutoCompleteChange,
+  onAutocompleteChange,
   textFieldProps,
-  ...rest //   @ts-ignore
-}: AutoCompleteFieldCustomProps<T, Multiple, DisableClearable, FreeSolo>) => {
-  const { control } = useFormContext()
+  ...rest
+}: AutocompleteFieldCustomProps<T, Multiple, DisableClearable, FreeSolo>) => {
+  const { control } = useFormContext();
 
   return (
     <>
@@ -69,79 +76,89 @@ const AutoCompleteFieldCustom = <
           return (
             <Autocomplete
               fullWidth={true}
-              renderTags={(value: any[], getTagProps: AutocompleteRenderGetTagProps) => {
-                return value.map((option: TOptionsValue, indexTag: number) => {
-                  const { key, ...tagProps } = getTagProps({ index: indexTag })
+              renderTags={(
+                value: T[],
+                getTagProps: AutocompleteRenderGetTagProps
+              ) => {
+                return value.map((option: T, indexTag: number) => {
+                  const { key, ...tagProps } = getTagProps({ index: indexTag });
                   return (
                     <Chip
                       key={key}
                       label={option.label}
-                      size='small'
+                      size="small"
                       deleteIcon={
                         <CancelIcon
                           sx={{
-                            color: 'rgba(0, 0, 0, 0.58)'
+                            color: "rgba(0, 0, 0, 0.58)",
                           }}
                         />
                       }
                       {...tagProps}
                     />
-                  )
-                })
+                  );
+                });
               }}
               loading={isLoadingData}
+              size="small"
               options={options || []}
               value={
                 rest?.multiple
-                  ? options.filter(item => value?.includes(item.value))
-                  : options.find(item => item.value === `${value}`) || value
+                  ? options.filter((item) => value?.includes(item.value))
+                  : options.find((item) => item.value === `${value}`) || value
               }
-              onChange={(e: SyntheticEvent, newValue) => {
+              onChange={(
+                e: SyntheticEvent,
+                newValue: AutocompleteValue<
+                  T,
+                  Multiple,
+                  DisableClearable,
+                  FreeSolo
+                >
+              ) => {
                 if (Array.isArray(newValue)) {
-                  onChange(newValue?.map(item => item?.value))
+                  onChange(newValue.map((item) => (item as T).value));
                 } else {
-                  onChange(newValue?.value)
+                  onChange((newValue as T)?.value);
                 }
 
-                if (onAutoCompleteChange) {
+                if (onAutocompleteChange) {
                   if (rest?.multiple && Array.isArray(newValue)) {
-                    onAutoCompleteChange(e, newValue?.map(item => item?.value))
+                    onAutocompleteChange(
+                      e,
+                      newValue.map((item) => item as T)
+                    );
                   } else {
-                    onAutoCompleteChange(e, newValue?.value)
+                    onAutocompleteChange(e, newValue as T);
                   }
                 }
               }}
-              noOptionsText='Không có lựa chọn'
+              noOptionsText="Không có lựa chọn"
               isOptionEqualToValue={(option, value) => {
-                return option.value === value?.value
-              }}
-              slotProps={{
-                popper: {
-                  sx: {
-                    zIndex: 10
-                  }
-                },
-                ...slotProps
+                return option.value === value?.value;
               }}
               renderOption={(
                 props: HTMLAttributes<HTMLLIElement>,
-                option: { label: string; value: string },
+                option: T,
                 { selected }: AutocompleteRenderOptionState
               ) => {
                 return (
                   <>
                     {isChooseMultipleCheckbox ? (
-                      <Box key={option.value} component='li' {...props}>
-                        <Checkbox checked={selected} style={{ marginRight: 8, padding: 0 }} />
+                      <Box key={option.value} component="li" {...props}>
+                        <Checkbox
+                          checked={selected}
+                          style={{ marginRight: 8, padding: 0 }}
+                        />
                         {option.label}
                       </Box>
                     ) : (
-                      <Box key={option.value} component='li' {...props}>
+                      <Box key={option.value} component="li" {...props}>
                         {option.label}
                       </Box>
                     )}
                   </>
-                )
+                );
               }}
               openOnFocus={true}
               {...rest} // Spread all inherited props
@@ -150,18 +167,21 @@ const AutoCompleteFieldCustom = <
                   <TextField
                     {...params}
                     {...textFieldProps}
-                    onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                    onChange={(
+                      e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+                    ) => {
                       if (onTextFieldChange) {
-                        onTextFieldChange(e)
+                        onTextFieldChange(e);
                       }
                     }}
                     sx={{
-                      '& .MuiInputBase-root.Mui-disabled': {
-                        color: '#888' // Change text color
+                      "& .MuiInputBase-root": {
+                        paddingRight: "12px !important",
+                        color: "inherit", // giữ nguyên màu mặc định
+                        "&.Mui-disabled": {
+                          color: "#888", // màu chữ khi disabled
+                        },
                       },
-                      '& .MuiInputBase-root': {
-                        paddingRight: '30px !important'
-                      }
                     }}
                     InputLabelProps={{ shrink: true }}
                     inputRef={inputRef}
@@ -173,24 +193,24 @@ const AutoCompleteFieldCustom = <
                       ...params.InputProps,
                       ...textFieldProps?.InputProps,
                       endAdornment: (
-                        <React.Fragment>
+                        <Fragment>
                           {isLoadingData ? (
-                            <CircularProgress color='primary' size={20} />
+                            <CircularProgress color="primary" size={20} />
                           ) : (
                             params.InputProps.endAdornment
                           )}
-                        </React.Fragment>
-                      )
+                        </Fragment>
+                      ),
                     }}
                   />
-                )
+                );
               }}
             />
-          )
+          );
         }}
       />
     </>
-  )
-}
+  );
+};
 
-export default AutoCompleteFieldCustom
+export default AutocompleteFieldCustom;
